@@ -1,0 +1,60 @@
+﻿<Window x:Class="ShortcutLauncher.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ShortcutLauncher"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="{Binding WindowHeight, UpdateSourceTrigger=PropertyChanged}" Width="{Binding WindowWidth, UpdateSourceTrigger=PropertyChanged}" ResizeMode="NoResize" >
+    <Window.Resources>
+        <Style x:Key="ButtonBorder"  TargetType="Border">
+            <Setter Property="CornerRadius" Value="{Binding VSButtonCornerRadius, Mode=OneWay}"/>
+        </Style>
+    </Window.Resources>
+    <Grid Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch" x:Name="_TopStackPanel" >
+            <ContentControl x:Name="ShortcutLauncherButton_ContentControl" Height="{Binding ShortcutLauncherButtonHeight}" Width="{Binding ShortcutLauncherButtonWidth}" BorderThickness="0" VerticalAlignment="Center" HorizontalAlignment="Left" VerticalContentAlignment="Center" HorizontalContentAlignment="Stretch">
+                <Image x:Name="ShortcutLauncherButton_ContentControl_Image" Margin="0,0,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                <ContentControl.ContextMenu>
+                    <ContextMenu x:Name="ShortcutLauncherButton_ContentControl_ContextMenu">
+                        <MenuItem Header="Run as Admin" Name="RunAsAdmin"
+                                  IsCheckable="True"
+                                  IsChecked="{Binding RunAsAdminChecked, Mode=TwoWay}"
+                                  IsEnabled="True"/>
+                        <MenuItem Header="Close" Name="Close1"
+                                  IsCheckable="False"
+                                  Click="MenuItem_Close_Clicked"
+                                  IsEnabled="True"/>
+                        <MenuItem Header="Icon Size" Name="IconSize" >
+                            <MenuItem Header="Icon Size: Small" Name="SmallSize"
+                                  IsCheckable="True"
+                                  IsChecked="{Binding SmallSizeChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  IsEnabled="True"/>
+                            <MenuItem Header="Icon Size: Medium" Name="MediumSize"
+                                  IsCheckable="True"
+                                  IsChecked="{Binding MediumSizeChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  IsEnabled="True"/>
+                            <MenuItem Header="Icon Size: Large" Name="LargeSize"
+                                  IsCheckable="True"
+                                  IsChecked="{Binding LargeSizeChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  IsEnabled="True"/>
+                        </MenuItem>
+                    </ContextMenu>
+                </ContentControl.ContextMenu>
+            </ContentControl>
+            <Popup x:Name="_mainStackPanelPopup" Opened="_mainStackPanelPopup_Opened" Closed="_mainStackPanelPopup_Closed" Placement="Bottom" Height="{Binding MainStackPanelHeight}" Width="{Binding MainStackPanelWidth}" PopupAnimation="Fade" AllowsTransparency="True">
+                <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" >
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="{Binding MainStackPanelPinRowHeight}" />
+                        <RowDefinition Height="{Binding MainStackPanelShortcutContainerRowHeight}"/>
+                    </Grid.RowDefinitions>
+                    <Button x:Name="PinUnpinButton" BorderThickness="0" VerticalAlignment="Top" HorizontalAlignment="Right" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Click="PinUnpinButton_Click">
+                        <Image x:Name="PinUnpinButton_Image" Margin="0,0,0,0" />
+                    </Button>
+                    <local:ShortcutButtonContainer Grid.Row="1" Margin="0,0,0,0" x:Name="_ShortcutsContainer" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+                </Grid>
+            </Popup>
+        </StackPanel>
+
+    </Grid>
+</Window>

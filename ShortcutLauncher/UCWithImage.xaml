@@ -1,0 +1,26 @@
+﻿<UserControl x:Class="ShortcutLauncher.UCWithImage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:ShortcutLauncher"
+             mc:Ignorable="d" 
+             d:DesignHeight="100" d:DesignWidth="100" MinHeight="50" MinWidth="50" Height="{Binding ControlHeight}" Width="{Binding ControlWidth}" >
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="{Binding DeleteRowHeight, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"/>
+            <RowDefinition Height="{Binding ImageRowHeight, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"/>
+            <RowDefinition Height="{Binding TextRowHeight, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"/>
+        </Grid.RowDefinitions>
+        <Button Grid.Row="0" Padding="0" Margin="0,0,0,0" FontSize="{Binding XFontSize, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Center" VerticalContentAlignment="Top" Height="{Binding DeleteRowHeight, UpdateSourceTrigger=PropertyChanged}" Width="{Binding DeleteRowHeight, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Right" VerticalAlignment="Bottom" x:Name="DeleteButton" Background="Red" Content="X" Click="DeleteButton_Click" >
+            <Button.Resources>
+                <Style TargetType="{x:Type Border}">
+                    <Setter Property="CornerRadius" Value="{Binding DeleteButtonCornerRadius, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"/>
+                </Style>
+            </Button.Resources>
+        </Button>
+        <Image Grid.Row="1" x:Name="ButtonWithImage_ControlImage" Margin="0,0,0,0" HorizontalAlignment="Center" MouseLeave="ButtonWithImage_ControlImage_MouseLeave" MouseEnter="ButtonWithImage_ControlImage_MouseEnter" MouseDown="ButtonWithImage_ControlImage_MouseDown" MouseUp="ButtonWithImage_ControlImage_MouseUp" VerticalAlignment="Stretch" Height="{Binding ImageRowHeight, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Width="{Binding ImageRowHeight, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"/>
+        <TextBlock Background="White" Grid.Row="2" Visibility="{Binding TextBlockVisible}" Margin="0,0,0,0" x:Name="CaptionBlock" MouseUp="Caption_MouseUp" HorizontalAlignment="Stretch" TextAlignment="Center" VerticalAlignment="Stretch" Height="{Binding TextRowHeight, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Text="{Binding ElementName=CaptionEditor, Path=Text}"/>
+        <TextBox Visibility="{Binding TextBoxVisible}" Grid.Row="2" Margin="0,0,0,0" x:Name="CaptionEditor" Text="sample" LostFocus="CaptionEditor_LostFocus" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" TextAlignment="Center" Height="{Binding TextRowHeight, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Keyboard.KeyUp="Caption_KeyUp" />
+    </Grid>
+</UserControl>
