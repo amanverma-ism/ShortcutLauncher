@@ -3,7 +3,7 @@
   <Profiles />
   <Settings>
     <Setting Name="ShortcutPaths" Type="System.String" Scope="User">
-      <Value Profile="(Default)">"{\"ShortcutJsonList\":[]}"</Value>
+      <Value Profile="(Default)">{"ShortcutJsonList":[]}</Value>
     </Setting>
     <Setting Name="IconSize" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">0</Value>
