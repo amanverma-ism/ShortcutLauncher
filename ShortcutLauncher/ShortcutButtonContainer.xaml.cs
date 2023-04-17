@@ -25,6 +25,15 @@ namespace ShortcutLauncher
     public partial class ShortcutButtonContainer : UserControl, INotifyPropertyChanged
     {
         private MainWindow _mainWindow;
+        private bool _messageBoxShowing = false;
+        private bool _contextMenuOpened = false;
+        public bool ContextMenuOpened
+        {
+            get
+            {
+                return _contextMenuOpened;
+            }
+        }
         WrapPanel ButtonContainer
         {
             get
@@ -62,6 +71,29 @@ namespace ShortcutLauncher
             }
         }
 
+        public string PinContextMenuText
+        {
+            get
+            {
+                return _mainWindow == null ? "Pin" : (_mainWindow.PopupPinned ? "UnPin" : "Pin");
+            }
+        }
+
+        public bool PinContextMenuChecked
+        {
+            get
+            {
+                return _mainWindow == null ? false : _mainWindow.PopupPinned;
+            }
+            set
+            {
+                if (_mainWindow != null)
+                {
+                    _mainWindow.PopupPinned = value;
+                }
+            }
+        }
+
         // Create the OnPropertyChanged method to raise the event
         // The calling member's name will be used as the parameter.
         protected void OnPropertyChanged(string name = null)
@@ -78,8 +110,6 @@ namespace ShortcutLauncher
             this.DragEnter += ButtonContainer_DragEnter;
             this.DragOver += ButtonContainer_DragOver;
             this.Drop += ButtonContainer_Drop;
-            this.MouseEnter += ShortcutButtonContainer_MouseEnter;
-            this.MouseLeave += ShortcutButtonContainer_MouseLeave;
         }
 
         private void ParentWindow_PinStateChanged(object sender, EventArgs e)
@@ -87,21 +117,13 @@ namespace ShortcutLauncher
             this.AllowDrop = ParentWindow.PopupPinned;
         }
 
-        private void ShortcutButtonContainer_MouseLeave(object sender, MouseEventArgs e)
-        {
-            this.Opacity = 0.5;
-        }
-
-        private void ShortcutButtonContainer_MouseEnter(object sender, MouseEventArgs e)
-        {
-            this.Opacity = 1;
-        }
-
         public void RefreshView()
         {
             OnPropertyChanged("ContainerHeight");
             OnPropertyChanged("ContainerWidth");
-            foreach(UCWithImage buttonWithImage in buttonContainer.Children)
+            OnPropertyChanged("PinContextMenuText");
+            OnPropertyChanged("PinContextMenuChecked");
+            foreach (UCWithImage buttonWithImage in buttonContainer.Children)
             {
                 buttonWithImage.RefreshView();
             }
@@ -181,6 +203,11 @@ namespace ShortcutLauncher
             buttonContainer.Children.Remove(item);
         }
 
+        public void RemoveAllItems()
+        {
+            buttonContainer.Children.Clear();
+        }
+
         public bool AddItem(ShortcutJson jsonObj, MainWindow parentWindow)
         {
             bool itemadded = false;
@@ -199,7 +226,7 @@ namespace ShortcutLauncher
                     itemadded = true;
                 }
             }
-            catch(Exception)
+            catch (Exception)
             {
 
             }
@@ -235,6 +262,39 @@ namespace ShortcutLauncher
             buttonContainer.Children.Remove(sourceObj);
             buttonContainer.Children.Insert(destinationIndex, sourceObj);
             return destinationIndex;
+        }
+
+        private void ClearAll_Click(object sender, RoutedEventArgs e)
+        {
+            ParentWindow.PopupForcefullyOpened = true;
+            _messageBoxShowing = true;
+            MessageBoxResult res = MessageBox.Show(ParentWindow, "Are you sure you want to clear all the shortcuts?", "Confirmation Dialog", MessageBoxButton.YesNo);
+            ParentWindow.PopupForcefullyOpened = false;
+            _messageBoxShowing = false;
+            if (res == MessageBoxResult.Yes)
+            {
+                ParentWindow.ClearAllShortcuts();
+            }
+            if (!ParentWindow.MainStackPanelCursorInside)
+            {
+                ParentWindow.ResetAndStartTimer();
+            }
+        }
+
+        private void ShortcutContainer_ContextMenu_Closed(object sender, RoutedEventArgs e)
+        {
+            _contextMenuOpened = false;
+            if (!_messageBoxShowing && !ParentWindow.ContextMenuOpened )
+            {
+                ParentWindow.PopupForcefullyOpened = false;
+                if(!ParentWindow.MainStackPanelCursorInside)
+                    ParentWindow.ResetAndStartTimer();
+            }
+        }
+        private void ShortcutContainer_ContextMenu_ContextMenuOpening(object sender, ContextMenuEventArgs e)
+        {
+            _contextMenuOpened = true;
+            ParentWindow.PopupForcefullyOpened = true;
         }
     }
 }

@@ -5,10 +5,22 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:ShortcutLauncher"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800" Height="{Binding ContainerHeight}" Width="{Binding ContainerWidth}">
+             d:DesignHeight="450" d:DesignWidth="800" Height="{Binding ContainerHeight}" Width="{Binding ContainerWidth}" ContextMenuOpening="ShortcutContainer_ContextMenu_ContextMenuOpening">
+    <UserControl.ContextMenu>
+        <ContextMenu x:Name="ShortcutContainer_ContextMenu" Closed="ShortcutContainer_ContextMenu_Closed" >
+            <MenuItem Header="{Binding PinContextMenuText, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Name="Pin"
+                                  IsCheckable="True"
+                                  IsChecked="{Binding PinContextMenuChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  IsEnabled="True"/>
+            <MenuItem Header="Clear All" Name="ClearAll"
+                                  IsCheckable="False"
+                                  Click="ClearAll_Click"
+                                  IsEnabled="True"/>
+        </ContextMenu>
+    </UserControl.ContextMenu>
     <Grid x:Name="_mainGrid" Height="{Binding ContainerHeight}" Width="{Binding ContainerWidth}" ScrollViewer.VerticalScrollBarVisibility="Auto" >
         <ScrollViewer x:Name="MyScrollViewer" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Width="{Binding ContainerWidth}" Height="{Binding ContainerHeight}" Margin="0,0,0,0">
-            <WrapPanel x:Name="buttonContainer" HorizontalAlignment="Stretch" MinHeight="50" Height="Auto" Width="{Binding ContainerWidth}"   Margin="0,0,0,0" VerticalAlignment="Stretch" MinWidth="50" UseLayoutRounding="True" ScrollViewer.CanContentScroll="True" ScrollViewer.VerticalScrollBarVisibility="Auto" />
+            <WrapPanel x:Name="buttonContainer" HorizontalAlignment="Stretch" MinHeight="50" Height="Auto" Width="{Binding ContainerWidth}"   Margin="0,0,0,0" VerticalAlignment="Stretch" MinWidth="50" />
         </ScrollViewer>
     </Grid>
 </UserControl>

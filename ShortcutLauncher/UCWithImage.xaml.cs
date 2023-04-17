@@ -185,6 +185,19 @@ namespace ShortcutLauncher
             }
         }
 
+        public double CaptionFontSize
+        {
+            get
+            {
+                if (_largeSizeChecked)
+                    return Math.Max(10, TextRowHeight * 0.75);
+                else if (_mediumSizeChecked)
+                    return Math.Max(10, TextRowHeight * 0.7);
+                else
+                    return Math.Max(10, TextRowHeight * 0.68);
+            }
+        }
+
         public double XFontSize
         {
             get
@@ -277,6 +290,7 @@ namespace ShortcutLauncher
             OnPropertyChanged("TextBoxVisible");
             OnPropertyChanged("TextBlockCornerRadius");
             OnPropertyChanged("XFontSize");
+            OnPropertyChanged("CaptionFontSize");
         }
 
         private void ShortcutClicked()

@@ -14,9 +14,9 @@
     <Grid Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
         <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch" x:Name="_TopStackPanel" >
             <ContentControl x:Name="ShortcutLauncherButton_ContentControl" Height="{Binding ShortcutLauncherButtonHeight}" Width="{Binding ShortcutLauncherButtonWidth}" BorderThickness="0" VerticalAlignment="Center" HorizontalAlignment="Left" VerticalContentAlignment="Center" HorizontalContentAlignment="Stretch">
-                <Image x:Name="ShortcutLauncherButton_ContentControl_Image" Margin="0,0,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                <Image x:Name="ShortcutLauncherButton_ContentControl_Image" Margin="0,0,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ContextMenuOpening="ShortcutLauncherButton_ContentControl_ContextMenu_ContextMenuOpening" />
                 <ContentControl.ContextMenu>
-                    <ContextMenu x:Name="ShortcutLauncherButton_ContentControl_ContextMenu">
+                    <ContextMenu x:Name="ShortcutLauncherButton_ContentControl_ContextMenu" Closed="ShortcutLauncherButton_ContentControl_ContextMenu_Closed" >
                         <MenuItem Header="Run as Admin" Name="RunAsAdmin"
                                   IsCheckable="True"
                                   IsChecked="{Binding RunAsAdminChecked, Mode=TwoWay}"
