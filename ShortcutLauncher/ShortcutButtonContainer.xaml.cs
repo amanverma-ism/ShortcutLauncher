@@ -24,6 +24,7 @@ namespace ShortcutLauncher
     /// </summary>
     public partial class ShortcutButtonContainer : UserControl, INotifyPropertyChanged
     {
+        private MainWindow _mainWindow;
         WrapPanel ButtonContainer
         {
             get
@@ -37,7 +38,12 @@ namespace ShortcutLauncher
         {
             get
             {
-                return (((((Parent as Grid).Parent as System.Windows.Controls.Primitives.Popup).Parent as StackPanel).Parent as Grid).Parent as MainWindow);
+                return _mainWindow;
+            }
+            set
+            {
+                _mainWindow = value;
+                _mainWindow.PinStateChanged += ParentWindow_PinStateChanged;
             }
         }
 
@@ -69,12 +75,16 @@ namespace ShortcutLauncher
             this.DataContext = this;
             _mainGrid.DataContext = this;
             buttonContainer.DataContext = this;
-            this.AllowDrop = true;
             this.DragEnter += ButtonContainer_DragEnter;
             this.DragOver += ButtonContainer_DragOver;
             this.Drop += ButtonContainer_Drop;
             this.MouseEnter += ShortcutButtonContainer_MouseEnter;
             this.MouseLeave += ShortcutButtonContainer_MouseLeave;
+        }
+
+        private void ParentWindow_PinStateChanged(object sender, EventArgs e)
+        {
+            this.AllowDrop = ParentWindow.PopupPinned;
         }
 
         private void ShortcutButtonContainer_MouseLeave(object sender, MouseEventArgs e)
@@ -168,7 +178,7 @@ namespace ShortcutLauncher
 
         public void RemoveItem(UCWithImage item)
         {
-
+            buttonContainer.Children.Remove(item);
         }
 
         public bool AddItem(ShortcutJson jsonObj, MainWindow parentWindow)
@@ -187,7 +197,6 @@ namespace ShortcutLauncher
                     item.ParentWindow = parentWindow;
                     buttonContainer.Children.Add(item);
                     itemadded = true;
-                    item.RefreshView();
                 }
             }
             catch(Exception)
@@ -217,6 +226,15 @@ namespace ShortcutLauncher
             }
 
             return bitmapSource;
+        }
+
+        public int ReorderShortcut(UCWithImage sourceObj, UCWithImage destinationObj)
+        {
+            int sourceIndex = buttonContainer.Children.IndexOf(sourceObj);
+            int destinationIndex = buttonContainer.Children.IndexOf(destinationObj);
+            buttonContainer.Children.Remove(sourceObj);
+            buttonContainer.Children.Insert(destinationIndex, sourceObj);
+            return destinationIndex;
         }
     }
 }

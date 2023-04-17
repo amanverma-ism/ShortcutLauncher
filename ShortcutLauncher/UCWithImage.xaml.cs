@@ -28,6 +28,7 @@ namespace ShortcutLauncher
         public event PropertyChangedEventHandler PropertyChanged;
         private Visibility _textBoxVisibility = Visibility.Collapsed;
         private Visibility _textBlockVisibility = Visibility.Visible;
+        private MainWindow _mainWindow;
 
         public Visibility TextBoxVisible
         {
@@ -66,15 +67,15 @@ namespace ShortcutLauncher
                 double height = this.Height;
                 if (_smallSizeChecked == true)
                 {
-                    height =  Math.Max(0, (ParentContainer.ActualHeight / 5.0) + ((ParentContainer.ActualHeight / 5.0) * 0.35));
+                    height = Math.Max(0, (ParentContainer.ActualHeight / 5.0) + ((ParentContainer.ActualHeight / 5.0) * 0.35));
                 }
                 else if (_mediumSizeChecked == true)
                 {
-                    height =  Math.Max(0, (ParentContainer.ActualHeight / 4.0) + ((ParentContainer.ActualHeight / 4.0) * 0.35));
+                    height = Math.Max(0, (ParentContainer.ActualHeight / 4.0) + ((ParentContainer.ActualHeight / 4.0) * 0.35));
                 }
                 else if (_largeSizeChecked == true)
                 {
-                    height =  Math.Max(0, (ParentContainer.ActualHeight / 3.0) + ((ParentContainer.ActualHeight / 3.0) * 0.35));
+                    height = Math.Max(0, (ParentContainer.ActualHeight / 3.0) + ((ParentContainer.ActualHeight / 3.0) * 0.35));
                 }
                 return height;
             }
@@ -87,7 +88,7 @@ namespace ShortcutLauncher
 
                 if (_smallSizeChecked == true)
                 {
-                    width =  Math.Max(0, ParentContainer.ActualHeight / 5.0);
+                    width = Math.Max(0, ParentContainer.ActualHeight / 5.0);
                 }
                 else if (_mediumSizeChecked == true)
                 {
@@ -188,7 +189,7 @@ namespace ShortcutLauncher
         {
             get
             {
-                
+
                 return Math.Max(10, double.IsNaN((12 / 17.5) * (DeleteButtonCornerRadius * 2.0)) ? 10 : ((12 / 17.5) * (DeleteButtonCornerRadius * 2.0)));
             }
         }
@@ -196,7 +197,14 @@ namespace ShortcutLauncher
         {
             get
             {
-                return Math.Max(0.1, ((DeleteButton.ActualHeight!= double.NaN && DeleteButton.ActualHeight != 0.0) ? DeleteButton.ActualHeight : DeleteButton.Height) / 2.0);
+                return Math.Max(0.1, DeleteRowHeight / 2.0);
+            }
+        }
+        public double TextBlockCornerRadius
+        {
+            get
+            {
+                return Math.Max(0.1, (TextRowHeight / 2) );
             }
         }
         public double DeleteRowHeight
@@ -222,14 +230,31 @@ namespace ShortcutLauncher
         }
         public string FilePath { get; set; }
         public string TargetPath { get; set; }
-        public MainWindow ParentWindow { get; set; }
+        public MainWindow ParentWindow
+        {
+            get
+            {
+                return _mainWindow;
+            }
+            set
+            {
+                _mainWindow = value;
+                _mainWindow.PinStateChanged += _mainWindow_PinStateChanged;
+            }
+        }
+
+        private void _mainWindow_PinStateChanged(object sender, EventArgs e)
+        {
+            this.AllowDrop = _mainWindow.PopupPinned;
+        }
+
         public static ShortcutButtonContainer ParentContainer { get; set; }
         private bool _mouseClicked;
         public UCWithImage()
         {
             _mouseClicked = false;
             InitializeComponent();
-            this.DataContext = this; 
+            this.DataContext = this;
         }
 
         // Create the OnPropertyChanged method to raise the event
@@ -250,12 +275,13 @@ namespace ShortcutLauncher
             OnPropertyChanged("DeleteButtonCornerRadius");
             OnPropertyChanged("TextBlockVisible");
             OnPropertyChanged("TextBoxVisible");
+            OnPropertyChanged("TextBlockCornerRadius");
             OnPropertyChanged("XFontSize");
         }
 
         private void ShortcutClicked()
         {
-            System.Diagnostics.ProcessStartInfo info =  new System.Diagnostics.ProcessStartInfo(string.IsNullOrEmpty(TargetPath) ? @FilePath : @TargetPath);
+            System.Diagnostics.ProcessStartInfo info = new System.Diagnostics.ProcessStartInfo(string.IsNullOrEmpty(TargetPath) ? @FilePath : @TargetPath);
             if (ParentWindow.RunAsAdminChecked)
             {
                 info.UseShellExecute = true;
@@ -310,24 +336,52 @@ namespace ShortcutLauncher
         private void ButtonWithImage_ControlImage_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.LeftButton == MouseButtonState.Pressed)
+            {
                 _mouseClicked = true;
+            }
+        }
+
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            base.OnMouseMove(e);
+            if (_mouseClicked && e.LeftButton == MouseButtonState.Pressed && ParentWindow.PopupPinned)
+            {
+                // Package the data.
+                DataObject data = new DataObject();
+                data.SetData("UCWithImageObject", this);
+
+                // Initiate the drag-and-drop operation.
+                DragDrop.DoDragDrop(this, data, DragDropEffects.Copy | DragDropEffects.Move);
+            }
+        }
+
+        protected override void OnDrop(DragEventArgs e)
+        {
+            base.OnDrop(e);
+            // If the DataObject contains string data, extract it.
+            if (e.Data.GetDataPresent("UCWithImageObject") && ParentWindow.PopupPinned)
+            {
+                UCWithImage obj = e.Data.GetData("UCWithImageObject") as UCWithImage;
+                if(obj != null)
+                {
+                    e.Effects = DragDropEffects.Move;
+                    ParentWindow.ReorderShortcut(obj, this);
+                }
+            }
+            e.Handled = true;
         }
 
         private void ButtonWithImage_ControlImage_MouseUp(object sender, MouseButtonEventArgs e)
         {
             if (_mouseClicked && e.ChangedButton == MouseButton.Left)
+            {
                 ShortcutClicked();
+            }
         }
 
         private void ButtonWithImage_ControlImage_MouseLeave(object sender, MouseEventArgs e)
         {
             _mouseClicked = false;
-        }
-
-        private void ButtonWithImage_ControlImage_MouseEnter(object sender, MouseEventArgs e)
-        {
-            if (e.LeftButton == MouseButtonState.Pressed)
-                _mouseClicked = true;
         }
 
         private void CaptionEditor_LostFocus(object sender, RoutedEventArgs e)
@@ -355,6 +409,5 @@ namespace ShortcutLauncher
         {
             ParentWindow.RemoveShortcut(this);
         }
-
     }
 }

@@ -19,8 +19,16 @@
                 </Style>
             </Button.Resources>
         </Button>
-        <Image Grid.Row="1" x:Name="ButtonWithImage_ControlImage" Margin="0,0,0,0" HorizontalAlignment="Center" MouseLeave="ButtonWithImage_ControlImage_MouseLeave" MouseEnter="ButtonWithImage_ControlImage_MouseEnter" MouseDown="ButtonWithImage_ControlImage_MouseDown" MouseUp="ButtonWithImage_ControlImage_MouseUp" VerticalAlignment="Stretch" Height="{Binding ImageRowHeight, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Width="{Binding ImageRowHeight, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"/>
-        <TextBlock Background="White" Grid.Row="2" Visibility="{Binding TextBlockVisible}" Margin="0,0,0,0" x:Name="CaptionBlock" MouseUp="Caption_MouseUp" HorizontalAlignment="Stretch" TextAlignment="Center" VerticalAlignment="Stretch" Height="{Binding TextRowHeight, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Text="{Binding ElementName=CaptionEditor, Path=Text}"/>
-        <TextBox Visibility="{Binding TextBoxVisible}" Grid.Row="2" Margin="0,0,0,0" x:Name="CaptionEditor" Text="sample" LostFocus="CaptionEditor_LostFocus" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" TextAlignment="Center" Height="{Binding TextRowHeight, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Keyboard.KeyUp="Caption_KeyUp" />
+        <Image Grid.Row="1" x:Name="ButtonWithImage_ControlImage" Margin="0,0,0,0" HorizontalAlignment="Center" MouseLeave="ButtonWithImage_ControlImage_MouseLeave" MouseDown="ButtonWithImage_ControlImage_MouseDown" MouseUp="ButtonWithImage_ControlImage_MouseUp" VerticalAlignment="Stretch" Height="{Binding ImageRowHeight, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Width="{Binding ImageRowHeight, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"/>
+        <Border  Height="{Binding TextRowHeight, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Stretch" Visibility="{Binding TextBlockVisible}" Grid.Row="2" Margin="0,0,0,0" BorderThickness="2" BorderBrush="Teal" Background="AntiqueWhite" CornerRadius="{Binding TextBlockCornerRadius, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+            <TextBlock Background="Transparent" Grid.Row="2" Visibility="{Binding TextBlockVisible}" Margin="0,0,0,0" x:Name="CaptionBlock" MouseUp="Caption_MouseUp" HorizontalAlignment="Stretch" TextAlignment="Center" VerticalAlignment="Stretch" Height="{Binding TextRowHeight, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Text="{Binding ElementName=CaptionEditor, Path=Text}"/>
+        </Border>
+        <TextBox Visibility="{Binding TextBoxVisible}" Grid.Row="2" Margin="0,0,0,0" x:Name="CaptionEditor" Text="sample" LostFocus="CaptionEditor_LostFocus" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" TextAlignment="Center" Height="{Binding TextRowHeight, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Keyboard.KeyUp="Caption_KeyUp" >
+            <TextBox.Resources>
+                <Style TargetType="{x:Type Border}">
+                    <Setter Property="CornerRadius" Value="{Binding TextBlockCornerRadius, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"/>
+                </Style>
+            </TextBox.Resources>
+        </TextBox>
     </Grid>
 </UserControl>
