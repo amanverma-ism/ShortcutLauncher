@@ -56,6 +56,58 @@ namespace ShortcutLauncher
             }
         }
 
+        public bool SmallSizeChecked
+        {
+            get
+            {
+                return UCWithImage.SmallSizeChecked;
+            }
+            set
+            {
+                UCWithImage.SmallSizeChecked = value;
+                RefreshView();
+            }
+        }
+
+        public bool MediumSizeChecked
+        {
+            get
+            {
+                return UCWithImage.MediumSizeChecked;
+            }
+            set
+            {
+                UCWithImage.MediumSizeChecked = value;
+                RefreshView();
+            }
+        }
+        public bool LargeSizeChecked
+        {
+            get
+            {
+                return UCWithImage.LargeSizeChecked;
+            }
+            set
+            {
+                UCWithImage.LargeSizeChecked = value;
+                RefreshView();
+            }
+        }
+
+        public bool RunAsAdminChecked
+        {
+            get
+            {
+                return _mainWindow != null ? _mainWindow.RunAsAdminChecked : Properties.Settings.Default.RunAsAdminChecked;
+            }
+            set
+            {
+                if (_mainWindow != null)
+                    _mainWindow.RunAsAdminChecked = value;
+                OnPropertyChanged("RunAsAdminChecked");
+            }
+        }
+
         public double ContainerHeight
         {
             get
@@ -75,7 +127,7 @@ namespace ShortcutLauncher
         {
             get
             {
-                return _mainWindow == null ? "Pin" : (_mainWindow.PopupPinned ? "UnPin" : "Pin");
+                return (PinContextMenuChecked ? "UnPin" : "Pin");
             }
         }
 
@@ -83,7 +135,12 @@ namespace ShortcutLauncher
         {
             get
             {
-                return _mainWindow == null ? false : _mainWindow.PopupPinned;
+                bool popupPinned = false;
+                if (_mainWindow != null)
+                {
+                    popupPinned = _mainWindow.PopupPinned;
+                }
+                return popupPinned;
             }
             set
             {
@@ -117,12 +174,21 @@ namespace ShortcutLauncher
             this.AllowDrop = ParentWindow.PopupPinned;
         }
 
+        internal void RaisePropertyChangedEvent(string str)
+        {
+            OnPropertyChanged(str);
+        }
+
         public void RefreshView()
         {
             OnPropertyChanged("ContainerHeight");
             OnPropertyChanged("ContainerWidth");
             OnPropertyChanged("PinContextMenuText");
             OnPropertyChanged("PinContextMenuChecked");
+            OnPropertyChanged("SmallSizeChecked");
+            OnPropertyChanged("MediumSizeChecked");
+            OnPropertyChanged("RunAsAdminChecked");
+            OnPropertyChanged("LargeSizeChecked");
             foreach (UCWithImage buttonWithImage in buttonContainer.Children)
             {
                 buttonWithImage.RefreshView();
@@ -284,10 +350,11 @@ namespace ShortcutLauncher
         private void ShortcutContainer_ContextMenu_Closed(object sender, RoutedEventArgs e)
         {
             _contextMenuOpened = false;
-            if (!_messageBoxShowing && !ParentWindow.ContextMenuOpened )
+            System.Diagnostics.Debug.WriteLine("PinContextMenuChecked = " + PinContextMenuChecked.ToString());
+            if (!_messageBoxShowing && !ParentWindow.ContextMenuOpened)
             {
                 ParentWindow.PopupForcefullyOpened = false;
-                if(!ParentWindow.MainStackPanelCursorInside)
+                if(!ParentWindow.MainStackPanelCursorInside && !PinContextMenuChecked)
                     ParentWindow.ResetAndStartTimer();
             }
         }
@@ -295,6 +362,12 @@ namespace ShortcutLauncher
         {
             _contextMenuOpened = true;
             ParentWindow.PopupForcefullyOpened = true;
+        }
+
+        private void PinUnPin_Click(object sender, RoutedEventArgs e)
+        {
+            PinContextMenuChecked = !PinContextMenuChecked;
+            OnPropertyChanged("PinContextMenuText");
         }
     }
 }

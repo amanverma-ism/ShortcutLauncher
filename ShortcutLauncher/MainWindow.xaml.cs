@@ -32,13 +32,19 @@ namespace ShortcutLauncher
         private bool _animation_is_running = false;
         private bool _popupPinned = false;
         private bool _popupForcefullyOpened = false;
-        private bool _ShortcutLauncherButton_ContentControl_MouseEntered = false;
+        private bool _ShortcutLauncherControl_MouseEntered = false;
         private System.Threading.SynchronizationContext _callersCtx;
         private MouseEventHandler _mouseEventHandler;
         private Point _mouseDownLocation;
         private bool _runAAdminsChecked;
         Timer _timer;
         public event EventHandler PinStateChanged;
+        private DoubleAnimation _increasePopupOpacityAnim;
+        private DoubleAnimation _decreasePopupOpacityAnim;
+        private DoubleAnimation _increaseShortcutIconOpacityAnim;
+        private DoubleAnimation _decreaseShortcutIconOpacityAnim;
+        BitmapSource _pinBitmapSource;
+        BitmapSource _unpinBitmapSource;
 
         public event PropertyChangedEventHandler PropertyChanged;
         private bool _contextMenuOpened = false;
@@ -66,25 +72,10 @@ namespace ShortcutLauncher
                 _popupForcefullyOpened = value;
                 if (!_mainStackPanelPopup.IsOpen && _popupForcefullyOpened)
                 {
-                    _mainStackPanelPopup.IsOpen = true;
+                    OpenPopup(false);
                 }
-                RefreshView();
             }
         }
-
-        public bool SmallSizeChecked
-        {
-            get
-            {
-                return UCWithImage.SmallSizeChecked;
-            }
-            set
-            {
-                UCWithImage.SmallSizeChecked = value;
-                RefreshView();
-            }
-        }
-
         public bool PopupPinned
         {
             get
@@ -93,32 +84,8 @@ namespace ShortcutLauncher
             }
             set
             {
-                _popupPinned = !value;
-                PinUnpinButton_Click(PinUnpinButton, null);
-            }
-        }
-        public bool MediumSizeChecked
-        {
-            get
-            {
-                return UCWithImage.MediumSizeChecked;
-            }
-            set
-            {
-                UCWithImage.MediumSizeChecked = value;
-                RefreshView();
-            }
-        }
-        public bool LargeSizeChecked
-        {
-            get
-            {
-                return UCWithImage.LargeSizeChecked;
-            }
-            set
-            {
-                UCWithImage.LargeSizeChecked = value;
-                RefreshView();
+                _popupPinned = value;
+                OnPinUnpinChange();
             }
         }
 
@@ -133,6 +100,8 @@ namespace ShortcutLauncher
                 _runAAdminsChecked = value;
                 Properties.Settings.Default.RunAsAdminChecked = value;
                 Properties.Settings.Default.Save();
+                OnPropertyChanged("RunAsAdminChecked");
+                _ShortcutsContainer.RaisePropertyChangedEvent("RunAsAdminChecked");
             }
         }
 
@@ -140,7 +109,7 @@ namespace ShortcutLauncher
         {
             get
             {
-                return System.Windows.SystemParameters.WorkArea.Height * 0.1;
+                return System.Windows.SystemParameters.WorkArea.Height * 0.08;
             }
         }
 
@@ -148,7 +117,7 @@ namespace ShortcutLauncher
         {
             get
             {
-                return System.Windows.SystemParameters.WorkArea.Height * 0.1;
+                return System.Windows.SystemParameters.WorkArea.Height * 0.08;
             }
         }
 
@@ -198,40 +167,15 @@ namespace ShortcutLauncher
             }
         }
 
-        private void ShortcutLauncherButton_MouseMove(object sender, MouseEventArgs e)
-        {
-            Debug.WriteLine("Leftbutton pressed: " + (Mouse.LeftButton == MouseButtonState.Pressed).ToString());
-            double distance = 0;
-            if (e != null)
-                distance = Math.Max(distance, Math.Abs(Point.Subtract(e.GetPosition(this), _mouseDownLocation).Length));
-            if (Mouse.LeftButton == MouseButtonState.Pressed && distance > 5)
-            {
-                (sender as ContentControl).Cursor = Cursors.SizeAll;
-
-                if (!_animation_is_running)
-                {
-                    var decreaseOpacityAnim = new DoubleAnimation(0.5, (Duration)TimeSpan.FromSeconds(1));
-                    this.BeginAnimation(UIElement.OpacityProperty, decreaseOpacityAnim);
-                    _animation_is_running = true;
-                }
-
-                this.DragMove();
-            }
-            else
-            {
-                if (_animation_is_running)
-                {
-                    var increaseOpacityAnim = new DoubleAnimation(1, (Duration)TimeSpan.FromSeconds(1));
-                    this.BeginAnimation(UIElement.OpacityProperty, increaseOpacityAnim);
-                    _animation_is_running = false;
-                }
-            }
-        }
-
 
         public MainWindow()
         {
             InitializeComponent();
+            _decreaseShortcutIconOpacityAnim = new DoubleAnimation(0.5, (Duration)TimeSpan.FromSeconds(1));
+            _increaseShortcutIconOpacityAnim = new DoubleAnimation(1, (Duration)TimeSpan.FromSeconds(1));
+            _decreasePopupOpacityAnim = new DoubleAnimation(0.5, (Duration)TimeSpan.FromSeconds(1));
+            _increasePopupOpacityAnim = new DoubleAnimation(1, (Duration)TimeSpan.FromSeconds(1));
+
             _callersCtx = System.Threading.SynchronizationContext.Current;
             _mainStackPanelCursorInside = false;
             _runAAdminsChecked = Properties.Settings.Default.RunAsAdminChecked;
@@ -247,7 +191,7 @@ namespace ShortcutLauncher
             this.Width = WindowWidth;
             var bitmapSource = Imaging.CreateBitmapSourceFromHBitmap(Properties.Resources.shortcut.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
             _launcherIconMultiplier = bitmapSource.Width / bitmapSource.Height;
-            ShortcutLauncherButton_ContentControl_Image.Source = bitmapSource;
+            ShortcutLauncherControl_Image.Source = bitmapSource;
             var bitmapSource1 = Imaging.CreateBitmapSourceFromHBitmap(_popupPinned ? Properties.Resources.Pin.GetHbitmap() : Properties.Resources.UnPin.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
             PinUnpinButton_Image.Source = bitmapSource1;
 
@@ -258,15 +202,16 @@ namespace ShortcutLauncher
             _ShortcutsContainer.Background = Brushes.Black;
             _ShortcutsContainer.Opacity = 0.5;
             _mainStackPanelPopup.PlacementTarget = _TopStackPanel;
-
+            _pinBitmapSource = Imaging.CreateBitmapSourceFromHBitmap(Properties.Resources.Pin.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+            _unpinBitmapSource = Imaging.CreateBitmapSourceFromHBitmap(Properties.Resources.UnPin.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
             _mainStackPanelPopup.MouseLeave += _mainStackPanel_MouseLeave;
             _mainStackPanelPopup.MouseEnter += _mainStackPanel_MouseEnter;
             UCWithImage.ParentContainer = _ShortcutsContainer;
 
-            ShortcutLauncherButton_ContentControl.MouseEnter += ShortcutLauncherButton_ContentControl_MouseEnter;
-            ShortcutLauncherButton_ContentControl.MouseLeave += ShortcutLauncherButton_ContentControl_MouseLeave;
-            ShortcutLauncherButton_ContentControl.PreviewMouseLeftButtonDown += ShortcutLauncherButton_PreviewMouseLeftButtonDown;
-            ShortcutLauncherButton_ContentControl.PreviewMouseLeftButtonUp += ShortcutLauncherButton_PreviewMouseLeftButtonUp;
+            ShortcutLauncherControl.MouseEnter += ShortcutLauncherControl_MouseEnter;
+            ShortcutLauncherControl.MouseLeave += ShortcutLauncherControl_MouseLeave;
+            ShortcutLauncherControl.PreviewMouseLeftButtonDown += ShortcutLauncherControl_PreviewMouseLeftButtonDown;
+            ShortcutLauncherControl.PreviewMouseLeftButtonUp += ShortcutLauncherControl_PreviewMouseLeftButtonUp;
             _timer = new Timer(1500);
             _timer.Elapsed += (sender1, args) =>
             {
@@ -274,7 +219,7 @@ namespace ShortcutLauncher
                 {
                     _callersCtx.Post((_) =>
                     {
-                        if (!_popupForcefullyOpened && !_popupPinned && !_mainStackPanelCursorInside && !_ShortcutsContainer.IsMouseDirectlyOver && !ShortcutLauncherButton_ContentControl.IsMouseDirectlyOver && _mainStackPanelPopup.IsOpen)
+                        if (!_popupPinned && !_popupForcefullyOpened && !_mainStackPanelCursorInside && !_ShortcutLauncherControl_MouseEntered && !_ShortcutsContainer.IsMouseDirectlyOver && !ShortcutLauncherControl.IsMouseDirectlyOver && _mainStackPanelPopup.IsOpen)
                         {
                             _ShortcutsContainer.BeginAnimation(OpacityProperty, null);
                             _ShortcutsContainer.Opacity = 0.5;
@@ -285,7 +230,7 @@ namespace ShortcutLauncher
                     }, null);
                 }
             };
-            _mouseEventHandler = new MouseEventHandler(ShortcutLauncherButton_MouseMove);
+            _mouseEventHandler = new MouseEventHandler(ShortcutLauncherControl_MouseMove);
 
             _mainStackPanelPopup.IsOpen = false;
             _ShortcutsContainer.ParentWindow = this;
@@ -304,88 +249,107 @@ namespace ShortcutLauncher
         private void _mainStackPanel_MouseEnter(object sender, MouseEventArgs e)
         {
             _mainStackPanelCursorInside = true;
-            if (!_popupForcefullyOpened && !_popupPinned)
+            _timer.Stop();
+            if (!_popupPinned && _mainStackPanelPopup.IsOpen && !_ShortcutsContainer.ContextMenuOpened && Math.Abs(_ShortcutsContainer.Opacity - 1.0) > double.Epsilon)
             {
                 _ShortcutsContainer.BeginAnimation(OpacityProperty, null);
-                _ShortcutsContainer.Opacity = 0.5;
-                var increaseOpacityAnim = new DoubleAnimation(1, (Duration)TimeSpan.FromSeconds(0.5));
-                _ShortcutsContainer.BeginAnimation(UIElement.OpacityProperty, increaseOpacityAnim);
+                //_ShortcutsContainer.Opacity = 0.5;
+                _ShortcutsContainer.BeginAnimation(UIElement.OpacityProperty, _increasePopupOpacityAnim);
             }
             Debug.WriteLine("_mainStackPanel_MouseEnter");
 
         }
 
-        internal void ShowPopupExplicitly()
-        {
-            _timer.Stop();
-            _mainStackPanelPopup.IsOpen = true;
-            if (!_popupForcefullyOpened && !_popupPinned)
-            {
-                _ShortcutsContainer.BeginAnimation(OpacityProperty, null);
-                _ShortcutsContainer.Opacity = 1;
-            }
-            RefreshView();
-        }
-
         internal void _mainStackPanel_MouseLeave(object sender, MouseEventArgs e)
         {
             _mainStackPanelCursorInside = false;
-
-            if (!_popupForcefullyOpened && !_popupPinned)
+            Debug.WriteLine("_mainStackPanel_MouseLeave");
+            if (!_popupPinned && !_ShortcutsContainer.ContextMenuOpened && !_popupForcefullyOpened)
             {
                 _ShortcutsContainer.BeginAnimation(OpacityProperty, null);
-                _ShortcutsContainer.Opacity = 1;
-                var decreaseOpacityAnim = new DoubleAnimation(0.5, (Duration)TimeSpan.FromSeconds(0.5));
-                _ShortcutsContainer.BeginAnimation(UIElement.OpacityProperty, decreaseOpacityAnim);
-                _mainStackPanelPopup.IsOpen = false;
-                Debug.WriteLine("mainstackpanel visibility collapsed: _mainStackPanel_MouseLeave");
-                RefreshView();
+                _ShortcutsContainer.BeginAnimation(UIElement.OpacityProperty, _decreasePopupOpacityAnim);
+                _timer.AutoReset = false;
+                _timer.Start();
             }
         }
 
-        private void ShortcutLauncherButton_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        #region ShortcutLauncherControl MouseEvents
+
+
+        private void ShortcutLauncherControl_MouseMove(object sender, MouseEventArgs e)
+        {
+            double distance = 0;
+            if (e != null)
+                distance = Math.Max(distance, Math.Abs(Point.Subtract(e.GetPosition(this), _mouseDownLocation).Length));
+            if (Mouse.LeftButton == MouseButtonState.Pressed && distance > 5)
+            {
+                (sender as ContentControl).Cursor = Cursors.SizeAll;
+                if (!_popupPinned && !_popupForcefullyOpened)
+                    ClosePopup();
+
+                if (!_animation_is_running)
+                {
+                    this.BeginAnimation(UIElement.OpacityProperty, null);
+                    this.BeginAnimation(UIElement.OpacityProperty, _decreaseShortcutIconOpacityAnim);
+                    _animation_is_running = true;
+                }
+
+                this.DragMove();
+            }
+            else
+            {
+                if (_animation_is_running)
+                {
+                    this.BeginAnimation(UIElement.OpacityProperty, null);
+                    this.BeginAnimation(UIElement.OpacityProperty, _increaseShortcutIconOpacityAnim);
+                    _animation_is_running = false;
+                }
+            }
+        }
+
+        private void ShortcutLauncherControl_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             (sender as ContentControl).Cursor = Cursors.Arrow;
             Debug.WriteLine("_VSLauncherButton_PreviewMouseLeftButtonUp");
-            ShortcutLauncherButton_ContentControl.MouseMove -= _mouseEventHandler;
-            Debug.WriteLine("ShortcutLauncherButton_ContentControl.MouseMove unsubscribed");
+            ShortcutLauncherControl.MouseMove -= _mouseEventHandler;
+            Debug.WriteLine("ShortcutLauncherControl.MouseMove unsubscribed");
 
-            _mainStackPanelPopup.IsOpen = true;
-            RefreshView();
+            if (!_mainStackPanelPopup.IsOpen)
+                OpenPopup(false, 0.5);
+
             Debug.WriteLine("mainstackpanel visible: _VSLauncherButton_ContentControl_MouseEnter");
 
         }
 
-        private void ShortcutLauncherButton_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        private void ShortcutLauncherControl_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            _mainStackPanelPopup.IsOpen = false;
-            _ShortcutsContainer.BeginAnimation(OpacityProperty, null);
-            _ShortcutsContainer.Opacity = 0.5;
-            Debug.WriteLine("mainstackpanel visibility collapsed: _VSLauncherButton_PreviewMouseLeftButtonDown");
-            RefreshView();
-            ShortcutLauncherButton_ContentControl.MouseMove += _mouseEventHandler;
             _mouseDownLocation = e.GetPosition(this);
-            Debug.WriteLine("ShortcutLauncherButton_ContentControl.MouseMove subscribed");
+            ShortcutLauncherControl.MouseMove += _mouseEventHandler;
+            Debug.WriteLine("ShortcutLauncherControl.MouseMove subscribed");
         }
 
 
-        private void ShortcutLauncherButton_ContentControl_MouseLeave(object sender, MouseEventArgs e)
+        private void ShortcutLauncherControl_MouseLeave(object sender, MouseEventArgs e)
         {
-            _ShortcutLauncherButton_ContentControl_MouseEntered = false;
+            _ShortcutLauncherControl_MouseEntered = false;
             (sender as ContentControl).Cursor = Cursors.Arrow;
-            Debug.WriteLine("_VSLauncherButton_ContentControl_MouseLeave");
-            _timer.AutoReset = false;
-            _timer.Start();
+            Debug.WriteLine("ShortcutLauncherControl_MouseLeave");
+            if (!_popupPinned && !_contextMenuOpened && !_popupForcefullyOpened)
+            {
+                _timer.AutoReset = false;
+                _timer.Start();
+            }
         }
 
-        private void ShortcutLauncherButton_ContentControl_MouseEnter(object sender, MouseEventArgs e)
+        private void ShortcutLauncherControl_MouseEnter(object sender, MouseEventArgs e)
         {
-            Debug.WriteLine("_VSLauncherButton_ContentControl_MouseEnter");
-            _ShortcutLauncherButton_ContentControl_MouseEntered = true;
+            Debug.WriteLine("ShortcutLauncherControl_MouseEnter");
+            _ShortcutLauncherControl_MouseEntered = true;
             _timer.Stop();
-            ShortcutLauncherButton_MouseMove(sender, null);
-            ShortcutLauncherButton_PreviewMouseLeftButtonUp(sender, null);
+            if (!_mainStackPanelPopup.IsOpen)
+                OpenPopup(false, 0.5);
         }
+        #endregion
 
         // Create the OnPropertyChanged method to raise the event
         // The calling member's name will be used as the parameter.
@@ -404,10 +368,7 @@ namespace ShortcutLauncher
             OnPropertyChanged("MainStackPanelHeight");
             OnPropertyChanged("MainStackPanelShortcutContainerRowHeight");
             OnPropertyChanged("MainStackPanelPinRowHeight");
-            OnPropertyChanged("RunAsChecked");
-            OnPropertyChanged("SmallSizeChecked");
-            OnPropertyChanged("MediumSizeChecked");
-            OnPropertyChanged("LargeSizeChecked");
+            OnPropertyChanged("RunAsAdminChecked");
             _ShortcutsContainer.RefreshView();
         }
 
@@ -536,11 +497,6 @@ namespace ShortcutLauncher
             GetShortcutDetails();
         }
 
-        private void CloseButton_Click(object sender, EventArgs e)
-        {
-            this.Close();
-        }
-
         private void MenuItem_Close_Clicked(object sender, RoutedEventArgs e)
         {
             if ((sender as MenuItem).Name == "Close1")
@@ -549,41 +505,67 @@ namespace ShortcutLauncher
             }
         }
 
-        public void PinUnpinButton_Click(object sender, RoutedEventArgs e)
+        public void OpenPopup(bool withAnimation = true, double newOpacity = 1)
         {
-            _popupPinned = !_popupPinned;
-            var bitmapSource = Imaging.CreateBitmapSourceFromHBitmap(
-                _popupPinned ? Properties.Resources.Pin.GetHbitmap() : Properties.Resources.UnPin.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
-
-            PinStateChanged.Invoke(this, new EventArgs());
-            PinUnpinButton_Image.Source = bitmapSource;
-            if (!_mainStackPanelPopup.IsOpen && _popupPinned)
+            if (!_mainStackPanelPopup.IsOpen)
             {
                 _mainStackPanelPopup.IsOpen = true;
                 _ShortcutsContainer.BeginAnimation(OpacityProperty, null);
-                _ShortcutsContainer.Opacity = 0.5;
-                var increaseOpacityAnim = new DoubleAnimation(1, (Duration)TimeSpan.FromSeconds(0.5));
-                _ShortcutsContainer.BeginAnimation(UIElement.OpacityProperty, increaseOpacityAnim);
+                if (withAnimation)
+                {
+                    _ShortcutsContainer.Opacity = 0.5;
+                    var increaseOpacityAnim = new DoubleAnimation(newOpacity, (Duration)TimeSpan.FromSeconds(0.5));
+                    _ShortcutsContainer.BeginAnimation(UIElement.OpacityProperty, increaseOpacityAnim);
+                }
+                else
+                    _ShortcutsContainer.Opacity = newOpacity;
+
                 RefreshView();
-                Debug.WriteLine("mainstackpanel visible: _VSLauncherButton_ContentControl_MouseDoubleClick");
+                Debug.WriteLine("mainstackpanel visible: OpenPopup()");
             }
         }
 
-        private void _mainStackPanelPopup_Opened(object sender, EventArgs e)
+        public void ClosePopup()
         {
-            this.Height = WindowHeight;
-            this.Width = WindowWidth;
-            RefreshView();
+            if (_mainStackPanelPopup.IsOpen)
+            {
+                _ShortcutsContainer.BeginAnimation(OpacityProperty, null);
+                _ShortcutsContainer.Opacity = 0.5;
+                _mainStackPanelPopup.IsOpen = false;
+                RefreshView();
+            }
+            Debug.WriteLine("mainstackpanel visibility collapsed: ClosePopup()");
         }
 
-        private void _mainStackPanelPopup_Closed(object sender, EventArgs e)
+        public void OnPinUnpinChange()
         {
-            this.Height = WindowHeight;
-            this.Width = WindowWidth;
-            RefreshView();
+            PinUnpinButton_Image.Source = _popupPinned ? _pinBitmapSource : _unpinBitmapSource;
+            if (!_mainStackPanelPopup.IsOpen && _popupPinned)
+            {
+                OpenPopup();
+                Debug.WriteLine("mainstackpanel visible: OnPinUnpinChange()");
+            }
+            PinStateChanged.Invoke(this, new EventArgs());
         }
 
-        private void ShortcutLauncherButton_ContentControl_ContextMenu_ContextMenuOpening(object sender, ContextMenuEventArgs e)
+        public void PinUnpinButton_Click(object sender, RoutedEventArgs e)
+        {
+            PopupPinned = !_popupPinned;
+            _ShortcutsContainer.RaisePropertyChangedEvent("PinContextMenuText");
+            if (!_popupPinned && !MainStackPanelCursorInside)
+            {
+                _ShortcutsContainer.BeginAnimation(OpacityProperty, null);
+                _ShortcutsContainer.Opacity = 0.5;
+            }
+
+            if (!_popupPinned)
+            {
+                _timer.AutoReset = false;
+                _timer.Start();
+            }
+        }
+
+        private void ShortcutLauncherControl_ContextMenuOpening(object sender, ContextMenuEventArgs e)
         {
             _contextMenuOpened = true;
             PopupForcefullyOpened = true;
@@ -600,18 +582,29 @@ namespace ShortcutLauncher
             _timer.Start();
         }
 
-        private void ShortcutLauncherButton_ContentControl_ContextMenu_Closed(object sender, RoutedEventArgs e)
+        private void ShortcutLauncherControl_ContextMenuClosed(object sender, RoutedEventArgs e)
         {
             _contextMenuOpened = false;
             if (!_ShortcutsContainer.ContextMenuOpened)
             {
                 PopupForcefullyOpened = false;
-                if (!MainStackPanelCursorInside && !_ShortcutLauncherButton_ContentControl_MouseEntered)
+                if (!MainStackPanelCursorInside && !_ShortcutLauncherControl_MouseEntered)
                 {
+                    if (!_popupPinned)
+                    {
+                        _ShortcutsContainer.BeginAnimation(OpacityProperty, null);
+                        _ShortcutsContainer.Opacity = 0.5;
+                    }
                     _timer.AutoReset = false;
                     _timer.Start();
                 }
+                else if (_mainStackPanelPopup.IsOpen && !MainStackPanelCursorInside && _ShortcutLauncherControl_MouseEntered && !_popupPinned)
+                {
+                    _ShortcutsContainer.BeginAnimation(OpacityProperty, null);
+                    _ShortcutsContainer.Opacity = 0.5;
+                }
             }
         }
+
     }
 }
