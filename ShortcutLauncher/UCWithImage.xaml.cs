@@ -311,10 +311,16 @@ namespace ShortcutLauncher
             }
             else
             {
-
-                info.UseShellExecute = string.IsNullOrEmpty(TargetPath) ? true : false;
-                info.Verb = "";
-                System.Diagnostics.Process.Start(info);
+                try
+                {
+                    info.UseShellExecute = string.IsNullOrEmpty(TargetPath) ? true : false;
+                    info.Verb = "";
+                    System.Diagnostics.Process.Start(info);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                }
             }
         }
 
