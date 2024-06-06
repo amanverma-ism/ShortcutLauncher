@@ -5,40 +5,10 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:ShortcutLauncher"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800" Height="{Binding ContainerHeight}" Width="{Binding ContainerWidth}" ContextMenuOpening="ShortcutContainer_ContextMenu_ContextMenuOpening">
-    <UserControl.ContextMenu>
-        <ContextMenu x:Name="ShortcutContainer_ContextMenu" Closed="ShortcutContainer_ContextMenu_Closed" >
-            <MenuItem Header="{Binding PinContextMenuText, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Name="Pin"
-                                  IsCheckable="False"
-                                  Click="PinUnPin_Click"
-                                  IsEnabled="True"/>
-            <MenuItem Header="Run as Admin" Name="RunAsAdmin"
-                                  IsCheckable="True"
-                                  IsChecked="{Binding RunAsAdminChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  IsEnabled="True"/>
-            <MenuItem Header="Icon Size" Name="IconSize" >
-                <MenuItem Header="Icon Size: Small" Name="SmallSize"
-                                  IsCheckable="True"
-                                  IsChecked="{Binding SmallSizeChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  IsEnabled="True"/>
-                <MenuItem Header="Icon Size: Medium" Name="MediumSize"
-                                  IsCheckable="True"
-                                  IsChecked="{Binding MediumSizeChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  IsEnabled="True"/>
-                <MenuItem Header="Icon Size: Large" Name="LargeSize"
-                                  IsCheckable="True"
-                                  IsChecked="{Binding LargeSizeChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  IsEnabled="True"/>
-            </MenuItem>
-            <MenuItem Header="Clear All" Name="ClearAll"
-                                  IsCheckable="False"
-                                  Click="ClearAll_Click"
-                                  IsEnabled="True"/>
-        </ContextMenu>
-    </UserControl.ContextMenu>
+             d:DesignHeight="450" d:DesignWidth="800" Height="{Binding ContainerHeight}" Width="{Binding ContainerWidth}">
     <Grid x:Name="_mainGrid" Height="{Binding ContainerHeight}" Width="{Binding ContainerWidth}" ScrollViewer.VerticalScrollBarVisibility="Auto" >
         <ScrollViewer x:Name="MyScrollViewer" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Width="{Binding ContainerWidth}" Height="{Binding ContainerHeight}" Margin="0,0,0,0">
-            <WrapPanel x:Name="buttonContainer" HorizontalAlignment="Stretch" MinHeight="50" Height="Auto" Width="{Binding ContainerWidth}"   Margin="0,0,0,0" VerticalAlignment="Stretch" MinWidth="50" />
+            <WrapPanel x:Name="buttonContainer" HorizontalAlignment="Stretch" MinHeight="50" Height="Auto" Width="{Binding ContainerWidth}"   Margin="0,0,0,0" VerticalAlignment="Stretch" MinWidth="50" UseLayoutRounding="True" ScrollViewer.CanContentScroll="True" ScrollViewer.VerticalScrollBarVisibility="Auto" />
         </ScrollViewer>
     </Grid>
 </UserControl>

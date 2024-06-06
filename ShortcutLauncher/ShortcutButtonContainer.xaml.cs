@@ -25,15 +25,6 @@ namespace ShortcutLauncher
     public partial class ShortcutButtonContainer : UserControl, INotifyPropertyChanged
     {
         private MainWindow _mainWindow;
-        private bool _messageBoxShowing = false;
-        private bool _contextMenuOpened = false;
-        public bool ContextMenuOpened
-        {
-            get
-            {
-                return _contextMenuOpened;
-            }
-        }
         WrapPanel ButtonContainer
         {
             get
@@ -56,58 +47,6 @@ namespace ShortcutLauncher
             }
         }
 
-        public bool SmallSizeChecked
-        {
-            get
-            {
-                return UCWithImage.SmallSizeChecked;
-            }
-            set
-            {
-                UCWithImage.SmallSizeChecked = value;
-                RefreshView();
-            }
-        }
-
-        public bool MediumSizeChecked
-        {
-            get
-            {
-                return UCWithImage.MediumSizeChecked;
-            }
-            set
-            {
-                UCWithImage.MediumSizeChecked = value;
-                RefreshView();
-            }
-        }
-        public bool LargeSizeChecked
-        {
-            get
-            {
-                return UCWithImage.LargeSizeChecked;
-            }
-            set
-            {
-                UCWithImage.LargeSizeChecked = value;
-                RefreshView();
-            }
-        }
-
-        public bool RunAsAdminChecked
-        {
-            get
-            {
-                return _mainWindow != null ? _mainWindow.RunAsAdminChecked : Properties.Settings.Default.RunAsAdminChecked;
-            }
-            set
-            {
-                if (_mainWindow != null)
-                    _mainWindow.RunAsAdminChecked = value;
-                OnPropertyChanged("RunAsAdminChecked");
-            }
-        }
-
         public double ContainerHeight
         {
             get
@@ -120,34 +59,6 @@ namespace ShortcutLauncher
             get
             {
                 return ParentWindow.MainStackPanelWidth;
-            }
-        }
-
-        public string PinContextMenuText
-        {
-            get
-            {
-                return (PinContextMenuChecked ? "UnPin" : "Pin");
-            }
-        }
-
-        public bool PinContextMenuChecked
-        {
-            get
-            {
-                bool popupPinned = false;
-                if (_mainWindow != null)
-                {
-                    popupPinned = _mainWindow.PopupPinned;
-                }
-                return popupPinned;
-            }
-            set
-            {
-                if (_mainWindow != null)
-                {
-                    _mainWindow.PopupPinned = value;
-                }
             }
         }
 
@@ -167,6 +78,8 @@ namespace ShortcutLauncher
             this.DragEnter += ButtonContainer_DragEnter;
             this.DragOver += ButtonContainer_DragOver;
             this.Drop += ButtonContainer_Drop;
+            this.MouseEnter += ShortcutButtonContainer_MouseEnter;
+            this.MouseLeave += ShortcutButtonContainer_MouseLeave;
         }
 
         private void ParentWindow_PinStateChanged(object sender, EventArgs e)
@@ -174,22 +87,21 @@ namespace ShortcutLauncher
             this.AllowDrop = ParentWindow.PopupPinned;
         }
 
-        internal void RaisePropertyChangedEvent(string str)
+        private void ShortcutButtonContainer_MouseLeave(object sender, MouseEventArgs e)
         {
-            OnPropertyChanged(str);
+            this.Opacity = 0.5;
+        }
+
+        private void ShortcutButtonContainer_MouseEnter(object sender, MouseEventArgs e)
+        {
+            this.Opacity = 1;
         }
 
         public void RefreshView()
         {
             OnPropertyChanged("ContainerHeight");
             OnPropertyChanged("ContainerWidth");
-            OnPropertyChanged("PinContextMenuText");
-            OnPropertyChanged("PinContextMenuChecked");
-            OnPropertyChanged("SmallSizeChecked");
-            OnPropertyChanged("MediumSizeChecked");
-            OnPropertyChanged("RunAsAdminChecked");
-            OnPropertyChanged("LargeSizeChecked");
-            foreach (UCWithImage buttonWithImage in buttonContainer.Children)
+            foreach(UCWithImage buttonWithImage in buttonContainer.Children)
             {
                 buttonWithImage.RefreshView();
             }
@@ -269,11 +181,6 @@ namespace ShortcutLauncher
             buttonContainer.Children.Remove(item);
         }
 
-        public void RemoveAllItems()
-        {
-            buttonContainer.Children.Clear();
-        }
-
         public bool AddItem(ShortcutJson jsonObj, MainWindow parentWindow)
         {
             bool itemadded = false;
@@ -292,7 +199,7 @@ namespace ShortcutLauncher
                     itemadded = true;
                 }
             }
-            catch (Exception)
+            catch(Exception)
             {
 
             }
@@ -328,46 +235,6 @@ namespace ShortcutLauncher
             buttonContainer.Children.Remove(sourceObj);
             buttonContainer.Children.Insert(destinationIndex, sourceObj);
             return destinationIndex;
-        }
-
-        private void ClearAll_Click(object sender, RoutedEventArgs e)
-        {
-            ParentWindow.PopupForcefullyOpened = true;
-            _messageBoxShowing = true;
-            MessageBoxResult res = MessageBox.Show(ParentWindow, "Are you sure you want to clear all the shortcuts?", "Confirmation Dialog", MessageBoxButton.YesNo);
-            ParentWindow.PopupForcefullyOpened = false;
-            _messageBoxShowing = false;
-            if (res == MessageBoxResult.Yes)
-            {
-                ParentWindow.ClearAllShortcuts();
-            }
-            if (!ParentWindow.MainStackPanelCursorInside)
-            {
-                ParentWindow.ResetAndStartTimer();
-            }
-        }
-
-        private void ShortcutContainer_ContextMenu_Closed(object sender, RoutedEventArgs e)
-        {
-            _contextMenuOpened = false;
-            System.Diagnostics.Debug.WriteLine("PinContextMenuChecked = " + PinContextMenuChecked.ToString());
-            if (!_messageBoxShowing && !ParentWindow.ContextMenuOpened)
-            {
-                ParentWindow.PopupForcefullyOpened = false;
-                if(!ParentWindow.MainStackPanelCursorInside && !PinContextMenuChecked)
-                    ParentWindow.ResetAndStartTimer();
-            }
-        }
-        private void ShortcutContainer_ContextMenu_ContextMenuOpening(object sender, ContextMenuEventArgs e)
-        {
-            _contextMenuOpened = true;
-            ParentWindow.PopupForcefullyOpened = true;
-        }
-
-        private void PinUnPin_Click(object sender, RoutedEventArgs e)
-        {
-            PinContextMenuChecked = !PinContextMenuChecked;
-            OnPropertyChanged("PinContextMenuText");
         }
     }
 }

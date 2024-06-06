@@ -13,22 +13,36 @@
     </Window.Resources>
     <Grid Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
         <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch" x:Name="_TopStackPanel" >
-            <ContentControl x:Name="ShortcutLauncherControl" Height="{Binding ShortcutLauncherButtonHeight}" Width="{Binding ShortcutLauncherButtonWidth}" BorderThickness="0" VerticalAlignment="Center" HorizontalAlignment="Left" VerticalContentAlignment="Center" HorizontalContentAlignment="Stretch">
-                <Image x:Name="ShortcutLauncherControl_Image" Margin="0,0,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ContextMenuOpening="ShortcutLauncherControl_ContextMenuOpening" />
+            <ContentControl x:Name="ShortcutLauncherButton_ContentControl" Height="{Binding ShortcutLauncherButtonHeight}" Width="{Binding ShortcutLauncherButtonWidth}" BorderThickness="0" VerticalAlignment="Center" HorizontalAlignment="Left" VerticalContentAlignment="Center" HorizontalContentAlignment="Stretch">
+                <Image x:Name="ShortcutLauncherButton_ContentControl_Image" Margin="0,0,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
                 <ContentControl.ContextMenu>
-                    <ContextMenu x:Name="ShortcutLauncherControl_ContextMenu" Closed="ShortcutLauncherControl_ContextMenuClosed" >
+                    <ContextMenu x:Name="ShortcutLauncherButton_ContentControl_ContextMenu">
                         <MenuItem Header="Run as Admin" Name="RunAsAdmin"
                                   IsCheckable="True"
-                                  IsChecked="{Binding RunAsAdminChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  IsChecked="{Binding RunAsAdminChecked, Mode=TwoWay}"
                                   IsEnabled="True"/>
                         <MenuItem Header="Close" Name="Close1"
                                   IsCheckable="False"
                                   Click="MenuItem_Close_Clicked"
                                   IsEnabled="True"/>
+                        <MenuItem Header="Icon Size" Name="IconSize" >
+                            <MenuItem Header="Icon Size: Small" Name="SmallSize"
+                                  IsCheckable="True"
+                                  IsChecked="{Binding SmallSizeChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  IsEnabled="True"/>
+                            <MenuItem Header="Icon Size: Medium" Name="MediumSize"
+                                  IsCheckable="True"
+                                  IsChecked="{Binding MediumSizeChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  IsEnabled="True"/>
+                            <MenuItem Header="Icon Size: Large" Name="LargeSize"
+                                  IsCheckable="True"
+                                  IsChecked="{Binding LargeSizeChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  IsEnabled="True"/>
+                        </MenuItem>
                     </ContextMenu>
                 </ContentControl.ContextMenu>
             </ContentControl>
-            <Popup x:Name="_mainStackPanelPopup" Placement="Bottom" Height="{Binding MainStackPanelHeight}" Width="{Binding MainStackPanelWidth}" PopupAnimation="Fade" AllowsTransparency="True">
+            <Popup x:Name="_mainStackPanelPopup" Opened="_mainStackPanelPopup_Opened" Closed="_mainStackPanelPopup_Closed" Placement="Bottom" Height="{Binding MainStackPanelHeight}" Width="{Binding MainStackPanelWidth}" PopupAnimation="Fade" AllowsTransparency="True">
                 <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" >
                     <Grid.RowDefinitions>
                         <RowDefinition Height="{Binding MainStackPanelPinRowHeight}" />
