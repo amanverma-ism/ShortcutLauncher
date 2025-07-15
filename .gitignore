@@ -1,0 +1,7 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs/ShortcutLauncher/v17
+/.vs/ShortcutLauncher/FileContentIndex
+/ShortcutLauncher/obj/x64/Debug
